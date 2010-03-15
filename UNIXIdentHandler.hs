@@ -14,6 +14,6 @@ unixHandler syse _ lport fport = do
   hClose out
   if (length name > 0)
     then return ("USERID", "UNIX : " ++ name)
-    else return ("ERROR","NO USER")
+    else return ("ERROR","UNKNOWN-ERROR")
 
 handlerInit cont = cont undefined
