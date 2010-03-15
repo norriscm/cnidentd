@@ -25,7 +25,7 @@ handleConnection :: HandlerState -> Handle -> IO ()  -- this is the control flow
 handleConnection s h =  finally hndlr cleanup where
   hndlr = withTimeout $ do
     hSetBuffering h System.IO.LineBuffering
-    query <- hGetLine h
+    query <- hGetLineN h 512
     let (lport, fport) = parseQuery query
     (resptype, addinfo) <- handleQuery s lport fport
     let resp = concat [show lport, ", ", show fport, " : ", resptype, " : ", addinfo, "\r\n"]
@@ -42,3 +42,12 @@ parseQuery :: String -> (Int, Int)
 parseQuery q = (read lport, read fport) where
   (lport, rst) = span isDigit $ dropWhile isSpace q
   (fport, _) = span isDigit $ dropWhile (not . isDigit) rst
+
+hGetLineN :: Handle -> Int -> IO String
+hGetLineN h n = hGetLineN' h n [] where
+  hGetLineN' _ 0 a = return (reverse a)
+  hGetLineN' h n a = do
+    c <- hGetChar h
+    if c == '\n'
+      then return (reverse a)
+      else hGetLineN' h (n-1) (c:a)
