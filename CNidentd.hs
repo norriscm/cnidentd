@@ -7,8 +7,8 @@ import OSXIdentHandler
 import Network
 import System.IO
 import System.Timeout
-import Control.Monad (forever)
-import Data.Maybe (fromMaybe)
+import Control.Monad (forever, liftM, replicateM)
+import Data.Maybe (fromMaybe, isJust, catMaybes)
 import Control.Concurrent (forkIO)
 import Control.Exception (finally)
 import System.Posix.Daemonize (daemonize)
@@ -44,10 +44,6 @@ parseQuery q = (read lport, read fport) where
   (fport, _) = span isDigit $ dropWhile (not . isDigit) rst
 
 hGetLineN :: Handle -> Int -> IO String
-hGetLineN h n = hGetLineN' h n [] where
-  hGetLineN' _ 0 a = return (reverse a)
-  hGetLineN' h n a = do
-    c <- hGetChar h
-    if c == '\n'
-      then return (reverse a)
-      else hGetLineN' h (n-1) (c:a)
+hGetLineN h n = liftM (takeWhile (/= '\n')) $ replicateM n (hGetChar h)
+
+
