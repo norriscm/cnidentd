@@ -9,20 +9,3 @@ cnidentd supports modular ident providers, supporting multiple strategies (and p
 cnidentd must currently be run as root.  On OS X, privilege dropping should be simple.  On Linux, lsof needs root to access other users' connections, so privilege dropping may not be feasible.
 
 The build is cabalized.
-
-sidentd
-=======
-A tiny static ident server in Haskell
-
-sidentd is derived from the same code as cnidentd, but only supports a simple static response strategy.  It is tiny, multithreaded, and should be quite secure.
-
-sidentd must be run as root.  Immediately after binding the port, and before daemonizing or listening for any connections, sidentd drops privileges to the daemon user and group.  If your system does not have daemon as uid=1,gid=1, make the appropriate changes to the program.
-
-Build with
- > ghc --make Sidentd.hs -o sidentd
-
-Run with
- > sudo ./sident USER
-where USER is the username you want returned for queries.
-
-sidentd doesn't yet support rc.d/ style start and stop options, so just kill it the old fashioned way.
