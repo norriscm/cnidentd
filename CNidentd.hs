@@ -7,36 +7,36 @@ import OSXIdentHandler
 import Network
 import System.IO
 import System.Timeout
-import Control.Monad (forever, liftM, replicateM)
-import Data.Maybe (fromMaybe, isJust, catMaybes)
+import Control.Monad (forever)
+import Data.Maybe (fromMaybe, isJust)
 import Control.Concurrent (forkIO)
 import Control.Exception (finally)
-import System.Posix.Daemonize (daemonize)
-import Char
+import System.Posix.Daemonize
+import Data.Char (isDigit, isSpace)
 
 main :: IO ()
-main = handlerInit $ (\st -> withSocketsDo $ do
-  s <- listenOn $ PortNumber 113
-  daemonize $ forever $ do
-    (h, host, port) <- accept s
-    forkIO (handleConnection st h))
+main = serviced simpleDaemon { privilegedAction = bindSocket, program = serve }
 
-handleConnection :: HandlerState -> Handle -> IO ()  -- this is the control flow of each connection thread
-handleConnection s h =  finally hndlr cleanup where
+bindSocket :: IO Socket
+bindSocket = withSocketsDo $ listenOn $ PortNumber 113
+
+serve :: Socket -> IO ()
+serve s = forever $ do
+  (h, _, _) <- accept s
+  forkIO $ handleConnection h
+
+handleConnection :: Handle -> IO ()  -- the control flow of each connection thread
+handleConnection h = hndlr `finally` hClose h where
   hndlr = withTimeout $ do
-    hSetBuffering h System.IO.LineBuffering
+    hSetBuffering h LineBuffering
     query <- hGetLineN h 512
     let (lport, fport) = parseQuery query
-    (resptype, addinfo) <- handleQuery s lport fport
+    (resptype, addinfo) <- handleQuery lport fport
     let resp = concat [show lport, ", ", show fport, " : ", resptype, " : ", addinfo, "\r\n"]
     hPutStr h resp
-  cleanup = do
-    hClose h
 
 withTimeout :: IO () -> IO () -- 30 second timeout per RFC
-withTimeout a = do
-  r <- timeout (30*(10^6)) a
-  return (fromMaybe () r)
+withTimeout a = fromMaybe () `fmap` timeout (30*(10^6)) a
 
 parseQuery :: String -> (Int, Int)
 parseQuery q = (read lport, read fport) where
@@ -44,6 +44,6 @@ parseQuery q = (read lport, read fport) where
   (fport, _) = span isDigit $ dropWhile (not . isDigit) rst
 
 hGetLineN :: Handle -> Int -> IO String
-hGetLineN h n = liftM (takeWhile (/= '\n')) $ replicateM n (hGetChar h)
-
-
+hGetLineN h cnt = fmap reverse $ go cnt [] where
+  go 0 a = return a
+  go n a = do {c <- hGetChar h; if c == '\n' then return a else go (n-1) (c:a)}
