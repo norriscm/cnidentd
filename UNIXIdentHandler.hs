@@ -7,7 +7,6 @@ type UnixCmd = Int -> Int -> String
 
 unixHandler :: UnixCmd -> Int -> Int -> IO (String, String) -- do the lookup
 unixHandler syse lport fport = do
-  putStrLn (syse lport fport)
   (_,out,_,proc) <- runInteractiveCommand (syse lport fport)
   hSetBuffering out LineBuffering
   name <- hGetLine out
