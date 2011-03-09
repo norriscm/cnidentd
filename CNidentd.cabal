@@ -39,7 +39,7 @@ includes:
 install-includes:
 include-dirs:
 hs-source-dirs: .
-other-modules: OSXIdentHandler SimpleIdentHandler TestIdentHandler
+other-modules: OSXIdentHandler TestIdentHandler
 ghc-prof-options:
 ghc-shared-options:
 ghc-options:

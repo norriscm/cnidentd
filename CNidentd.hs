@@ -2,7 +2,7 @@ module Main (main) where
 
 --a platform-specific module does the heavy lifting to answer queries
 --import SimpleIdentHandler
-import OSXIdentHandler
+import OSXIdentHandler (handleQuery)
 
 import Network
 import System.IO
